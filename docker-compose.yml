@@ -1,0 +1,34 @@
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - db
+
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/context_ai
+
+    command: >
+      sh -c "
+      echo 'Waiting for postgres...';
+      while ! nc -z db 5432; do sleep 1; done;
+      echo 'Postgres started';
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+
+  db:
+    image: postgres:15
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: context_ai
+
+    ports:
+      - "5432:5432"
