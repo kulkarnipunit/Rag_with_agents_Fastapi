@@ -11,6 +11,9 @@ services:
     depends_on:
       - db
 
+    env_file:
+      - .env   # ⭐ THIS IS THE FIX
+
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/context_ai
 

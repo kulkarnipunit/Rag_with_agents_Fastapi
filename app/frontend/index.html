@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Personal Companion AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f5f7fa;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    #chatBox {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+
+    .msg-user {
+      color: #0066cc;
+      margin-bottom: 6px;
+    }
+
+    .msg-ai {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    input, button {
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background: #0052a3;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🧠 Personal Companion AI</h1>
+
+<div class="card">
+  <h3>📄 Upload PDF</h3>
+  <input type="file" id="pdfFile" />
+  <button onclick="uploadPDF()">Upload</button>
+  <p id="uploadStatus"></p>
+</div>
+
+<div class="card">
+  <h3>💬 Chat</h3>
+
+  <div id="chatBox"></div>
+
+  <input type="text" id="messageInput" placeholder="Ask something..." style="width:80%;" />
+  <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8000"
+
+function addMessage(sender, text) {
+  const chatBox = document.getElementById("chatBox")
+  const div = document.createElement("div")
+
+  div.className = sender === "user" ? "msg-user" : "msg-ai"
+  div.textContent = (sender === "user" ? "You: " : "AI: ") + text
+
+  chatBox.appendChild(div)
+  chatBox.scrollTop = chatBox.scrollHeight
+}
+
+async function uploadPDF() {
+  const fileInput = document.getElementById("pdfFile")
+  const status = document.getElementById("uploadStatus")
+
+  if (!fileInput.files.length) {
+    status.textContent = "Please select a file"
+    return
+  }
+
+  const formData = new FormData()
+  formData.append("file", fileInput.files[0])
+
+  status.textContent = "Uploading..."
+
+  try {
+    const res = await fetch(`${API_BASE}/documents/upload`, {
+      method: "POST",
+      body: formData
+    })
+
+    const data = await res.json()
+    status.textContent = "✅ Uploaded successfully"
+
+  } catch (err) {
+    status.textContent = "❌ Upload failed"
+    console.error(err)
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById("messageInput")
+  const message = input.value.trim()
+
+  if (!message) return
+
+  addMessage("user", message)
+  input.value = ""
+
+  try {
+    const res = await fetch(`${API_BASE}/chat/message`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: message,
+        user_id: 1
+      })
+    })
+
+    const data = await res.json()
+    addMessage("ai", data.response)
+
+  } catch (err) {
+    addMessage("ai", "Error contacting server")
+    console.error(err)
+  }
+}
+</script>
+
+</body>
+</html>

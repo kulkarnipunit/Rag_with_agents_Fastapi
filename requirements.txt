@@ -6,3 +6,9 @@ python-jose
 passlib[bcrypt]
 python-multipart
 pymupdf
+sentence-transformers
+numpy
+openai
+python-dotenv
+python-dotenv
+groq

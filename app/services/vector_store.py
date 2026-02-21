@@ -1,23 +1,33 @@
-VECTOR_DB = []
+import numpy as np
 
-def similarity(a, b):
-    return sum(x * y for x, y in zip(a, b))
+def cosine_similarity(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+def search(query_embedding, memories):
 
-def store_vector(text: str, embedding: list):
-    VECTOR_DB.append({
-        "text": text,
-        "embedding": embedding
-    })
-
-
-def search(query_embedding, top_k=3):
     scored = []
 
-    for item in VECTOR_DB:
-        score = similarity(query_embedding, item["embedding"])
-        scored.append((score, item["text"]))
+    for m in memories:
+        emb = eval(m.embedding)
+        score = cosine_similarity(query_embedding, emb)
+        scored.append((score, m))
 
-    scored.sort(reverse=True)
+    scored.sort(key=lambda x: x[0], reverse=True)
 
-    return [text for _, text in scored[:top_k]]
+    return [m.content for _, m in scored[:5]]
+
+
+def store_vector(db, user_id, content, embedding):
+    from app.models.memory import Memory
+    
+    memory = Memory(
+        user_id=user_id,
+        content=content,
+        embedding=str(embedding)
+    )
+    
+    db.add(memory)
+    db.commit()
+    db.refresh(memory)
+    
+    return memory
